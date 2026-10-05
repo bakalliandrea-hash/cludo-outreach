@@ -1,137 +1,54 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Cludo Outreach Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: header with campaign picker and stats, sticky toolbar (queue tabs + Outlook sync), then one column of
-   prospect cards grouped by organisation; each card expands into a timeline, the next email as an editable draft,
-   and one-click Outlook buttons. Settings and Import open as panels. */
-:root{
-  --bg:#f5f6f8; --surface:#ffffff; --fg:#1b2430; --muted:#5b6675; --line:#dde2e9;
-  --accent:#0f6e8c; --accent-fg:#ffffff; --accent-soft:#e3f1f5;
-  --warn:#9a5b00; --warn-soft:#fff3dc; --ok:#1f7a4d; --ok-soft:#e2f3e9; --due:#b4232c; --due-soft:#fde8e9;
-  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#141a21; --surface:#1d242d; --fg:#e8ecf1; --muted:#9aa6b4; --line:#2e3844;
-  --accent:#5fc0dc; --accent-fg:#0d1a20; --accent-soft:#1a3640;
-  --warn:#f0b65a; --warn-soft:#3a2d12; --ok:#6ad39a; --ok-soft:#163626; --due:#ff8a8f; --due-soft:#3f1b1e; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#141a21; --surface:#1d242d; --fg:#e8ecf1; --muted:#9aa6b4; --line:#2e3844;
-  --accent:#5fc0dc; --accent-fg:#0d1a20; --accent-soft:#1a3640;
-  --warn:#f0b65a; --warn-soft:#3a2d12; --ok:#6ad39a; --ok-soft:#163626; --due:#ff8a8f; --due-soft:#3f1b1e; color-scheme:dark}
-
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5;margin:0}
-.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:18px 60px}
-h1{font-size:20px;font-weight:600;margin:0}
-h2{font-size:15px;font-weight:600;margin:0 0 8px}
-.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
-.who{color:var(--muted);font-size:13px}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-select,input[type=text],input[type=number],textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:12px 0 4px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-.stat b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
-.stat span{color:var(--muted);font-size:12px}
-
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:10px;overflow-x:auto}
-.tab{font:inherit;font-weight:500;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;cursor:pointer;margin-bottom:-1px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
-.tab.hot{color:var(--due)} .tab.hot[aria-selected="true"]{border-bottom-color:var(--due)}
-.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 12px;border-bottom:1px solid var(--line);margin-bottom:14px}
-.chk{display:inline-flex;gap:6px;align-items:center;color:var(--muted);cursor:pointer;white-space:nowrap}
-.sync{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
-.sync .btn{padding:5px 10px;font-size:13px}
-.err{color:var(--warn)}
-
-.grp{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px;font-variant-numeric:tabular-nums}
-.grp:first-child{margin-top:0}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
-.card.due{border-left:3px solid var(--due)}
-.head{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:10px 12px;cursor:pointer}
-.head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.name{font-weight:600} .org{color:var(--muted)}
-.meta{color:var(--muted);font-size:13px;min-width:0;overflow-wrap:anywhere}
-.pills{justify-content:flex-end}
-.pill{font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
-.pill.rev{background:var(--warn-soft);color:var(--warn)} .pill.ok{background:var(--ok-soft);color:var(--ok)}
-.pill.pend{background:var(--warn-soft);color:var(--warn)} .pill.due{background:var(--due-soft);color:var(--due)} .pill.mute{background:var(--line);color:var(--muted)}
-
-.body{border-top:1px solid var(--line);padding:12px}
-.timeline{display:flex;flex-wrap:wrap;gap:6px 0;margin:0 0 12px;padding:0;list-style:none;font-size:13px}
-.timeline li{display:flex;align-items:center;gap:6px;padding-right:14px;color:var(--muted)}
-.timeline li::before{content:"";width:9px;height:9px;border-radius:50%;border:2px solid var(--line);flex:none}
-.timeline li.done{color:var(--fg)} .timeline li.done::before{background:var(--ok);border-color:var(--ok)}
-.timeline li.next{color:var(--fg);font-weight:500} .timeline li.next::before{border-color:var(--accent)}
-.timeline li.late::before{border-color:var(--due);background:var(--due)}
-.timeline li.reply{color:var(--fg)} .timeline li.reply::before{background:var(--accent);border-color:var(--accent)}
-.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px 16px;font-size:13px;margin-bottom:10px}
-.fields b{font-weight:500;color:var(--muted);display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
-.fields span{overflow-wrap:anywhere}
-label.lbl{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
-.subj,.draft,.tpl{width:100%;font:13px/1.55 var(--font-mono);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
-.draft{min-height:200px;resize:vertical} .tpl{min-height:140px;resize:vertical}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
-.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
-.btn:hover{border-color:var(--accent)} .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.btn.danger{color:var(--due)} .btn:disabled{opacity:.5;cursor:default}
-.note{font-size:12px;color:var(--muted);margin-top:8px;max-width:70ch}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
-.panel p{margin:0 0 10px;max-width:70ch}
-.panel .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
-.toast.show{opacity:1}
-.empty{color:var(--muted);padding:30px 0;text-align:center}
-.foot{color:var(--muted);font-size:13px;margin-top:18px}
-.foot button,.linkish{font:inherit;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
-@media (prefers-reduced-motion:reduce){.toast{transition:none}}
-@media (max-width:520px){.head{grid-template-columns:1fr}.pills{justify-content:flex-start}}
-</style>
+<link rel="stylesheet" href="app.css">
 
 <div class="wrap">
   <div class="top">
     <div><h1>Cludo Outreach Desk</h1><div class="who" id="who">Connecting…</div></div>
     <div class="row">
       <select id="campaignSel" aria-label="Campaign"></select>
-      <button class="btn" id="btnImport">Import prospects</button>
+      <button class="btn" id="btnImport">Import / backup</button>
       <button class="btn" id="btnSettings">Sequence &amp; settings</button>
+      <button class="btn" id="btnSignOut" hidden>Sign out</button>
     </div>
   </div>
 
-  <div class="panel" id="gate" hidden><p id="gateMsg"></p></div>
+  <div class="panel" id="gate" hidden><p id="gateMsg"></p><div class="row"><button class="btn primary" id="btnSignIn" hidden>Sign in with Microsoft</button></div></div>
 
   <div class="panel" id="importPanel" hidden>
     <h2>Import prospects into this campaign</h2>
-    <p>Accepted: the <code>contacts.json</code> generated with Claude, or a CSV with the columns <code>first_name, last_name, email, organisation, title</code> and optionally <code>area, website, linkedin, city, subject, body</code>. Prospects are matched by email address, so importing the same file twice updates rather than duplicates. Everything is stored in your private space in this app; nobody else at Cludo can see your prospects.</p>
+    <p>Accepted: the <code>contacts.json</code> generated with Claude, a CSV with the columns <code>first_name, last_name, email, organisation, title</code> (optionally <code>area, website, linkedin, city, subject, body</code>; commas, semicolons or tabs), or a backup file exported from this page. Prospects are matched by email address, so importing the same file twice updates rather than duplicates. A backup restores the sent, reply and bounce history as well.</p>
     <div class="row">
       <label class="btn primary" for="importFile">Choose file</label>
-      <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv" hidden>
+      <input type="file" id="importFile" accept=".json,.csv,.tsv,.txt,application/json,text/csv,text/plain" hidden>
+      <button class="btn" id="btnExport">Download backup</button>
+      <button class="btn" id="btnExportCopy">Copy backup</button>
       <button class="btn" id="btnImportClose">Close</button>
       <span id="importMsg" class="who"></span>
     </div>
+    <p class="note" id="storageNote"></p>
   </div>
 
   <div class="panel" id="settingsPanel" hidden>
     <h2>Sequence for <span id="setCampName"></span></h2>
-    <p>Email 1 uses each prospect's own subject and body when they were imported with one (the personalised Spanish drafts); otherwise the template below. Placeholders: <code>{first_name}</code> <code>{last_name}</code> <code>{organisation}</code> <code>{area}</code> <code>{title}</code>.</p>
+    <p>Email 1 uses each prospect's own subject and body when they were imported with one; otherwise the template below. Placeholders: <code>{first_name}</code> <code>{last_name}</code> <code>{organisation}</code> <code>{area}</code> <code>{title}</code>. When a prospect has no <code>area</code>, it is guessed from the job title (web, communication or IT) and the card is marked for review.</p>
     <div class="grid">
       <div><label class="lbl" for="t1s">Email 1 · subject</label><input class="subj" id="t1s" type="text"><label class="lbl" for="t1b">Email 1 · body (fallback)</label><textarea class="tpl" id="t1b"></textarea></div>
       <div><label class="lbl" for="t2s">Follow-up 1 · subject</label><input class="subj" id="t2s" type="text"><label class="lbl" for="t2b">Follow-up 1 · body</label><textarea class="tpl" id="t2b"></textarea></div>
       <div><label class="lbl" for="t3s">Follow-up 2 · subject</label><input class="subj" id="t3s" type="text"><label class="lbl" for="t3b">Follow-up 2 · body</label><textarea class="tpl" id="t3b"></textarea></div>
     </div>
     <div class="row" style="margin-top:12px">
-      <label class="chk">Wait after Email 1 <input type="number" id="w1" min="1" max="30" style="width:64px"> working days</label>
-      <label class="chk">Wait after Follow-up 1 <input type="number" id="w2" min="1" max="30" style="width:64px"> working days</label>
-      <label class="chk">Campaign name <input type="text" id="campName" style="width:220px"></label>
-      <label class="chk">Your Outlook address <input type="text" id="senderEmail" style="width:240px" placeholder="name@cludo.com"></label>
+      <label class="chk">Wait after Email 1 <input type="number" id="w1" min="1" max="30" class="w64"> working days</label>
+      <label class="chk">Wait after Follow-up 1 <input type="number" id="w2" min="1" max="30" class="w64"> working days</label>
+      <label class="chk">Campaign name <input type="text" id="campName" class="w220"></label>
+      <label class="chk">Your Outlook address <input type="text" id="senderEmail" class="w240" placeholder="name@cludo.com"></label>
     </div>
     <label class="lbl" for="hol">Public holidays to skip (one date per line, YYYY-MM-DD)</label>
-    <textarea class="tpl" id="hol" style="min-height:90px"></textarea>
+    <textarea class="tpl short" id="hol"></textarea>
     <div class="actions">
       <button class="btn primary" id="btnSaveSettings">Save</button>
+      <button class="btn" id="btnResetTemplates">Reset templates to default</button>
       <button class="btn" id="btnNewCampaign">New campaign</button>
       <button class="btn" id="btnSettingsClose">Close</button>
       <button class="btn danger" id="btnDeleteCampaign">Delete this campaign and its prospects</button>
@@ -152,11 +69,11 @@ label.lbl{display:block;font-size:11px;letter-spacing:.04em;text-transform:upper
     <div class="row">
       <label class="chk"><input type="checkbox" id="fReview"> Needs review only</label>
       <span class="chk" id="tabHint"></span>
-      <button class="btn" id="copyList" style="margin-left:auto">Copy status list</button>
+      <button class="btn push" id="copyList">Copy status list</button>
     </div>
     <div class="sync" id="syncRow"><button class="btn" id="syncBtn">Sync with Outlook</button><span id="syncStatus"></span><button class="linkish" id="logToggle" hidden>details</button></div>
-    <div class="bar" id="syncBar" hidden style="margin-top:8px;height:8px;background:var(--line);border-radius:4px;overflow:hidden"><i id="syncFill" style="display:block;height:100%;width:0;background:var(--accent);transition:width .3s"></i></div>
-    <pre id="syncLog" hidden style="font:12px/1.5 var(--font-mono);color:var(--muted);white-space:pre-wrap;max-height:220px;overflow:auto;margin:6px 0 0"></pre>
+    <div class="bar" id="syncBar" hidden><i id="syncFill"></i></div>
+    <pre id="syncLog" class="log" hidden></pre>
   </div>
 
   <div id="list"></div>
@@ -165,541 +82,8 @@ label.lbl{display:block;font-size:11px;letter-spacing:.04em;text-transform:upper
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script>
-// ---------- constants ----------
-const STEP_NAME = {1: 'Email 1', 2: 'Follow-up 1', 3: 'Follow-up 2'};
-const DEFAULT_HOLIDAYS = ['2026-10-12','2026-11-01','2026-12-06','2026-12-08','2026-12-25','2027-01-01','2027-01-06','2027-03-26','2027-05-01','2027-08-15','2027-10-12','2027-11-01','2027-12-06','2027-12-08','2027-12-25'];
-const DEFAULT_CAMPAIGN = {
-  name: 'Spain universities', createdAt: '', waitDays: [2, 3], holidays: DEFAULT_HOLIDAYS, campaignStart: '2026-10-05',
-  t: {
-    1: {subject: 'Experiencia de búsqueda en la web de {organisation}', body: 'Hola {first_name},\n\nHe visto que te ocupas de {area} en {organisation} y te escribo en relación con el buscador de vuestra web.\n\n…'},
-    2: {subject: 'Re: Experiencia de búsqueda en la web de {organisation}', body: 'Hola {first_name},\n\nTe escribo respecto al correo que te envié hace unos días sobre el buscador de vuestra web, por si aún no lo has visto.\n\nCuando tengas un momento, me gustaría saber qué te parece.'},
-    3: {subject: 'Re: Experiencia de búsqueda en la web de {organisation}', body: 'Hola {first_name},\n\nQuería hacer un último intento. Puedo prepararte un análisis gratuito del buscador de vuestra web: un resumen concreto de dónde funciona bien la búsqueda y dónde se podría mejorar.\n\nCludo es una herramienta que ayuda a universidades e instituciones a hacer su buscador más conversacional y más fácil de gestionar, incluidas funcionalidades de IA. Ya trabajamos con varias universidades europeas y estamos intentando entender mejor cómo abordan hoy este tema las universidades españolas.\n\nSi te parece, me gustaría hacer una breve llamada: nada comercial, sino un intercambio en el que comentemos los resultados del análisis, vosotros nos deis feedback sobre la herramienta que estamos construyendo y nosotros os enseñemos cómo funciona nuestro buscador. Algo útil para ambas partes.\n\nDime si crees que puede tener sentido.'}
-  }
-};
-
-// ---------- runtime state ----------
-let db = null, user = null, mcp = null, perms = null, me = null, uid = null, SENDER = '';
-let campaigns = {}, campaignId = null, camp = null;      // campaigns[id] = {...DEFAULT_CAMPAIGN}
-let P = {};                                              // prospects of the current campaign, keyed by email: {id, data..., log:{sent,replies,bounces}, manual:{...}, pending}
-let tab = 'todo', toastT, showHandled = false, syncing = false;
-const open = new Set();
-
-const $ = s => document.querySelector(s);
-const list = $('#list'), toast = $('#toast');
-function say(msg){ toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>toast.classList.remove('show'), 2200); }
-function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function enc(s){ return encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase()); }
-function setStatus(msg, isErr){ const el = $('#syncStatus'); el.textContent = msg; el.className = isErr ? 'err' : ''; }
-const LOG = [];
-const prog = {phase: 0, folders: 2, done: 0, total: 0};
-function showProgress(pct, label){ const bar = $('#syncBar'); bar.hidden = pct == null; if (pct != null) { $('#syncFill').style.width = Math.max(2, Math.min(100, pct)) + '%'; if (label) setStatus(label); } }
-function folderProgress(folder, done, total, pages){
-  // each folder is half the bar; inside a folder use the server's total when it gives one, else assume 10 pages
-  const within = total ? Math.min(1, done / total) : Math.min(0.95, pages / 10);
-  const pct = Math.round(((prog.phase + within) / prog.folders) * 100);
-  showProgress(pct, `Syncing ${folder}… ${done}${total ? ' of ' + total : ''} emails read · ${pct}%`);
-}
-function logLine(msg){ LOG.push(new Date().toLocaleTimeString('en-GB') + '  ' + msg); if (LOG.length > 200) LOG.shift(); const el = $('#syncLog'); el.textContent = LOG.join('\n'); el.scrollTop = el.scrollHeight; $('#logToggle').hidden = false; }
-$('#logToggle').addEventListener('click', () => { const el = $('#syncLog'); el.hidden = !el.hidden; });
-function keyOf(email){
-  if (email && typeof email === 'object') email = email.address || (email.emailAddress && email.emailAddress.address) || email.email || email.name || '';
-  const s = String(email || '').trim().toLowerCase();
-  const m = s.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/);   // "Name <x@y.z>" → x@y.z
-  return m ? m[0] : s;
-}
-function docId(email){ return keyOf(email).replace(/[^a-z0-9]/g, '_').slice(0, 180); }   // db document ids: safe characters only
-
-// ---------- dates ----------
-function ymd(d){ const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0'); }
-function todayYmd(){ return ymd(new Date()); }
-function isWorkDay(y){ const d = new Date(y + 'T12:00:00'); const w = d.getDay(); return w !== 0 && w !== 6 && !(camp.holidays || []).includes(y); }
-function addWorkDays(fromIso, n){ let d = new Date(ymd(fromIso) + 'T12:00:00'), left = n; while (left > 0) { d.setDate(d.getDate() + 1); if (isWorkDay(ymd(d))) left--; } return ymd(d); }
-function fmt(y){ if (!y) return ''; const d = new Date(y.length === 10 ? y + 'T12:00:00' : y); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}); }
-function dayDiff(a, b){ return Math.round((new Date(a + 'T12:00:00') - new Date(b + 'T12:00:00')) / 86400000); }
-
-// ---------- derived status per prospect ----------
-function info(c){
-  const L = c.log || {}, M = c.manual || {};
-  let sent = [...new Set([...(L.sent || []), ...(M.sent || [])])].sort();
-  const bounces = [...(L.bounces || [])].sort(), voided = new Set();
-  for (const b of bounces) { const cand = sent.filter(x => !voided.has(x) && x <= b && (new Date(b) - new Date(x)) < 2 * 86400000); if (cand.length) voided.add(cand[cand.length - 1]); }
-  sent = sent.filter(x => !voided.has(x));
-  let replies = M.ignoreReplies ? [] : [...(L.replies || [])];
-  if (M.replied) replies.push(M.replied);
-  replies = [...new Set(replies)].sort();
-  const n = Math.min(sent.length, 3), lastSent = sent[sent.length - 1] || null, lastReply = replies[replies.length - 1] || null;
-  const o = {sent, replies, n, lastSent, lastReply, lastBounce: bounces[bounces.length - 1] || null, bounced: voided.size || (bounces.length && !sent.length ? bounces.length : 0), step: n + 1, due: null, status: 'todo'};
-  if (M.handled) { o.status = 'handled'; return o; }
-  if (lastReply) { o.status = (lastSent && lastSent > lastReply) ? 'handled' : 'replied'; return o; }
-  if (n === 0) return o;
-  if (n >= 3) { o.status = 'finished'; return o; }
-  o.due = addWorkDays(lastSent, (camp.waitDays || [2, 3])[n - 1]);
-  o.status = todayYmd() >= o.due ? 'due' : 'waiting';
-  return o;
-}
-function fill(tpl, c){ return String(tpl || '').replace(/\{(first_name|last_name|organisation|area|title|email)\}/g, (m, k) => c[k] || ''); }
-function subjectFor(c, step){ if (step === 1 && c.subject) return c.subject; const t = (camp.t || {})[step] || {}; if (step > 1 && c.subject && !t.subject) return 'Re: ' + c.subject; return fill(t.subject, c) || (step > 1 && c.subject ? 'Re: ' + c.subject : ''); }
-function bodyFor(c, step){ if (step === 1 && c.body) return c.body; return fill(((camp.t || {})[step] || {}).body, c); }
-function links(c, subject, body){
-  return { owa: 'https://outlook.office.com/mail/deeplink/compose?to=' + enc(c.email) + '&subject=' + enc(subject) + '&body=' + enc(body) + (SENDER ? '&login_hint=' + enc(SENDER) : ''),
-           mailto: 'mailto:' + c.email + '?subject=' + enc(subject) + '&body=' + enc(body) };
-}
-async function copy(text, label){
-  try { await navigator.clipboard.writeText(text); say(label + ' copied'); }
-  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); say(label + ' copied'); } catch (e2) { say('Select and copy manually'); } document.body.removeChild(ta); }
-}
-
-// ---------- rendering ----------
-const byOrg = (a,b) => String(a.c.organisation).localeCompare(String(b.c.organisation), 'es', {sensitivity: 'base'}) || String(a.c.last_name).localeCompare(String(b.c.last_name), 'es', {sensitivity: 'base'});
-const todoOrder = (a,b) => ((b.i.bounced ? 1 : 0) - (a.i.bounced ? 1 : 0)) || byOrg(a,b);
-const TAB_ORDER = {todo: todoOrder, due: byOrg, waiting: byOrg, replied: byOrg, finished: byOrg};
-const EMPTY = {todo: 'Everyone in this campaign has received the first email.', due: 'No follow-ups due today.', waiting: 'Nobody is waiting on a follow-up.',
-  replied: 'No replies yet. Replies are detected from your Inbox on sync.', finished: 'Nobody has completed the three-email sequence yet.'};
-const HINT = {todo: 'Haven’t received email 1 yet', due: 'Follow-up date reached', waiting: 'Sent; next follow-up not due yet',
-  replied: 'They wrote back; answer them in Outlook and they leave this page', finished: 'Three emails sent, no reply'};
-
-function pillsFor(c, i){
-  const p = [];
-  if (i.status === 'due') p.push(`<span class="pill due">${esc(STEP_NAME[i.step])} due ${dayDiff(todayYmd(), i.due) > 0 ? esc(fmt(i.due)) : 'today'}</span>`);
-  if (i.status === 'waiting') p.push(`<span class="pill mute">${esc(STEP_NAME[i.step])} due ${esc(fmt(i.due))}</span>`);
-  if (i.status === 'replied') p.push(`<span class="pill ok">Replied ${esc(fmt(i.lastReply))}</span>`);
-  if (i.status === 'finished') p.push(`<span class="pill mute">3 sent · no reply</span>`);
-  if (i.status === 'handled') p.push(`<span class="pill ok">Answered ${esc(fmt(i.lastSent))}</span>`);
-  if (i.n > 0 && i.status !== 'handled') p.push(`<span class="pill ok">${i.n} sent</span>`);
-  const pd = c.pending;
-  if (pd && pd.step === i.step && i.status !== 'replied' && i.status !== 'handled') p.push(`<span class="pill pend">Draft opened ${esc(fmt(pd.at))}</span>`);
-  if (i.bounced && i.status !== 'handled') p.push(`<span class="pill due">Delivery failed ${esc(fmt(i.lastBounce))} · resend</span>`);
-  if (c.review === 'yes') p.push('<span class="pill rev">Review área</span>');
-  if (i.n === 0 && c.area) p.push(`<span class="pill">${esc(c.area)}</span>`);
-  return p.join('');
-}
-function timelineHTML(c, i){
-  const items = [];
-  for (let s = 1; s <= 3; s++) {
-    const at = i.sent[s - 1];
-    if (at) items.push(`<li class="done">${STEP_NAME[s]} sent ${esc(fmt(at))}</li>`);
-    else if (s === i.step && i.due) items.push(`<li class="next ${i.status === 'due' ? 'late' : ''}">${STEP_NAME[s]} due ${esc(fmt(i.due))}</li>`);
-    else if (s === 1) items.push(`<li class="next">${STEP_NAME[1]} not sent yet</li>`);
-    else items.push(`<li>${STEP_NAME[s]}</li>`);
-  }
-  if (i.lastReply) items.push(`<li class="reply">Replied ${esc(fmt(i.lastReply))}</li>`);
-  if (i.bounced) items.push(`<li class="late">${i.bounced} email${i.bounced > 1 ? 's' : ''} not delivered (bounced ${esc(fmt(i.lastBounce))}); it does not count as sent</li>`);
-  return `<ul class="timeline">${items.join('')}</ul>`;
-}
-function cardHTML(c){
-  const i = info(c), isOpen = open.has(c.key);
-  return `<div class="card ${i.status === 'due' ? 'due' : ''}" data-key="${esc(c.key)}">
-    <div class="head" tabindex="0" role="button" aria-expanded="${isOpen}">
-      <div class="meta"><span class="name">${esc(c.first_name)} ${esc(c.last_name)}</span> <span class="org">· ${esc(c.organisation)}</span><br>${esc(c.title)}</div>
-      <div class="pills row">${pillsFor(c, i)}</div>
-    </div>
-    ${isOpen ? bodyHTML(c, i) : ''}
-  </div>`;
-}
-function bodyHTML(c, i){
-  const canSend = i.status === 'todo' || i.status === 'due' || i.status === 'waiting', step = i.step, id = docId(c.email);
-  const draft = canSend ? `
-    <label class="lbl" for="s${id}">${esc(STEP_NAME[step])} · subject</label>
-    <input class="subj" id="s${id}" value="${esc(subjectFor(c, step))}">
-    <label class="lbl" for="b${id}">${esc(STEP_NAME[step])} · body (editable; your Outlook signature is added on send)</label>
-    <textarea class="draft" id="b${id}" ${step === 1 ? 'style="min-height:330px"' : ''}>${esc(bodyFor(c, step))}</textarea>
-    <div class="actions">
-      <a class="btn primary" data-act="owa" href="#" target="_blank" rel="noopener">Open ${esc(STEP_NAME[step].toLowerCase())} in Outlook web</a>
-      <a class="btn" data-act="mailto" href="#" target="_top">Open in Outlook app</a>
-      <button class="btn" data-act="copyEmail">Copy address</button>
-      <button class="btn" data-act="copyBody">Copy body</button>
-      ${c.pending && c.pending.step === step ? '<button class="btn" data-act="unpend">Clear “draft opened”</button>' : ''}
-      <button class="btn" data-act="manualSent">Mark ${esc(STEP_NAME[step].toLowerCase())} as sent manually</button>
-      ${i.n === 0 ? '' : '<button class="btn" data-act="manualReplied">They replied (mark by hand)</button>'}
-      <button class="btn danger" data-act="remove">Remove prospect</button>
-    </div>` : i.status === 'replied' ? `
-    <div class="actions">
-      <a class="btn primary" href="https://outlook.office.com/mail/inbox${SENDER ? '?login_hint=' + enc(SENDER) : ''}" target="_blank" rel="noopener">Open Inbox in Outlook web</a>
-      <button class="btn" data-act="copyEmail">Copy address</button>
-      <button class="btn" data-act="notReply">Not a real reply (auto-reply)</button>
-      <button class="btn" data-act="handled">I answered them, remove from here</button>
-    </div>` : i.status === 'finished' ? `
-    <div class="actions"><button class="btn" data-act="copyEmail">Copy address</button><button class="btn" data-act="manualReplied">They replied (mark by hand)</button></div>` : `
-    <div class="actions"><button class="btn" data-act="unhandle">Bring back to Replied</button></div>`;
-  const note = c.review === 'yes' && step === 1 && canSend ? 'The job title looks academic rather than web, IT or communications, so the [área] wording is a placeholder. Edit it before sending, or remove this prospect.'
-    : i.bounced && canSend ? 'Outlook reported this email as undeliverable, so it is not counted. If the bounce said “bad outbound sender”, your mailbox was blocked by Microsoft; wait for IT to lift the block before resending. If it said the address was not found, fix or remove the prospect.'
-    : canSend ? 'Nothing is sent from this page; Outlook opens with the draft ready. The prospect advances only when the email shows up in your Sent Items.' : '';
-  return `<div class="body">${timelineHTML(c, i)}
-    <div class="fields">
-      <div><b>Email</b><span>${esc(c.email)}</span></div>
-      ${c.website ? `<div><b>Website</b><span><a href="${esc(c.website)}" target="_blank" rel="noopener">${esc(String(c.website).replace(/^https?:\/\/(www\.)?/, ''))}</a></span></div>` : ''}
-      ${c.linkedin ? `<div><b>LinkedIn</b><span><a href="${esc(c.linkedin)}" target="_blank" rel="noopener">profile</a></span></div>` : ''}
-      ${c.city ? `<div><b>City</b><span>${esc(c.city)}</span></div>` : ''}
-    </div>${draft}${note ? `<p class="note">${note}</p>` : ''}</div>`;
-}
-
-function render(){
-  const rv = $('#fReview').checked;
-  const all = Object.values(P).map(c => ({c, i: info(c)}));
-  const counts = {todo: 0, due: 0, waiting: 0, replied: 0, finished: 0, handled: 0};
-  for (const x of all) counts[x.i.status]++;
-  const rows = all.filter(x => (showHandled && tab === 'replied' ? (x.i.status === 'replied' || x.i.status === 'handled') : x.i.status === tab) && (!rv || x.c.review === 'yes'));
-  rows.sort(TAB_ORDER[tab]);
-  let html = '', lastOrg = null;
-  for (const x of rows) {
-    if (x.c.organisation !== lastOrg) { lastOrg = x.c.organisation; html += `<div class="grp">${esc(lastOrg)} · ${rows.filter(y => y.c.organisation === lastOrg).length}</div>`; }
-    html += cardHTML(x.c);
-  }
-  list.innerHTML = html;
-  for (const t of document.querySelectorAll('#tabs .tab')) { const k = t.dataset.tab; t.textContent = {todo: 'To contact', due: 'Follow-up due', waiting: 'Waiting', replied: 'Replied', finished: 'Finished'}[k] + ` (${counts[k]})`; t.setAttribute('aria-selected', k === tab); }
-  $('#tabHint').textContent = HINT[tab];
-  $('#empty').hidden = rows.length > 0 || !all.length; $('#empty').textContent = EMPTY[tab];
-  const total = all.length, contacted = total - counts.todo, replied = counts.replied + counts.handled, bounced = all.filter(x => x.i.bounced).length;
-  $('#stats').innerHTML = total ? `
-    <div class="stat"><b>${total}</b><span>prospects</span></div>
-    <div class="stat"><b>${contacted}</b><span>contacted</span></div>
-    <div class="stat"><b>${counts.due}</b><span>follow-ups due</span></div>
-    <div class="stat"><b>${replied}</b><span>replied${contacted ? ' · ' + Math.round(100 * replied / contacted) + '%' : ''}</span></div>
-    <div class="stat"><b>${counts.finished}</b><span>finished, no reply</span></div>
-    ${bounced ? `<div class="stat"><b>${bounced}</b><span>bounced</span></div>` : ''}` : '';
-  const foot = $('#foot'); foot.hidden = !(tab === 'replied' && counts.handled > 0);
-  if (!foot.hidden) foot.innerHTML = `${counts.handled} conversation${counts.handled === 1 ? '' : 's'} answered and handed over to Outlook. <button id="toggleHandled">${showHandled ? 'Hide them' : 'Show them'}</button>`;
-  if (!total && db && camp) { $('#empty').hidden = false; $('#empty').textContent = 'No prospects in this campaign yet. Use “Import prospects” to add them.'; }
-}
-function refreshLinks(card, c){
-  const subj = card.querySelector('.subj'), body = card.querySelector('.draft'); if (!subj || !body) return;
-  const l = links(c, subj.value, body.value);
-  card.querySelector('[data-act="owa"]').href = l.owa; card.querySelector('[data-act="mailto"]').href = l.mailto;
-}
-
-// ---------- persistence (artifact database, private per user) ----------
-// Layout: data/users/<uid>/profile {senderEmail, campaignId} · data/users/<uid>/<cid> = campaign · data/users/<uid>/<cid>/chunks/p<n> = {type:'chunk', n, items}.
-// data/users/<uid>/<cid>/prospects/<id> is the old one-document-per-prospect layout: merged in and removed on load.
-// Documents the store hands back are FROZEN: copy them (clone) before adding fields or editing, or the change silently does nothing.
-const base = () => `data/users/${uid}`;
-const campPath = id => `${base()}/${id}`;
-const CHUNK = 40;                                                        // prospects per stored document (keeps each doc well under the 256 KiB cap)
-const chunkPath = (id, n) => `${base()}/${id}/chunks/p${n}`;
-const clone = v => JSON.parse(JSON.stringify(v));
-let profile = {}, loaded = false;                                        // loaded: the current campaign's prospects were read back successfully
-function saveProfile(patch){ Object.assign(profile, patch); return enqueue(() => db.doc(`${base()}/profile`).set(profile)).catch(e => logLine('profile save failed: ' + (e.message || e.code))); }
-const writeQueue = []; let writing = false;
-function enqueue(fn){ return new Promise((res, rej) => { writeQueue.push({fn, res, rej}); pump(); }); }
-async function pump(){ if (writing) return; writing = true; while (writeQueue.length) { const w = writeQueue.shift(); try { w.res(await w.fn()); } catch (e) { w.rej(e); } } writing = false; }
-function stripState(c){ const {key, ...rest} = c; return rest; }
-function chunkDoc(n){ const items = {}; for (const c of Object.values(P)) if (c.chunk === n) items[docId(c.email)] = stripState(c); return {type: 'chunk', n, items}; }
-function assignChunk(c){ if (c.chunk !== undefined && c.chunk !== null) return; const counts = {}; for (const x of Object.values(P)) if (x !== c && x.chunk !== undefined) counts[x.chunk] = (counts[x.chunk] || 0) + 1; let n = 0; while ((counts[n] || 0) >= CHUNK) n++; c.chunk = n; }
-async function writeChunk(n, cid){
-  cid = cid || campaignId;
-  for (let attempt = 0; attempt < 6; attempt++) {
-    try { await db.doc(chunkPath(cid, n)).set(chunkDoc(n)); return; }
-    catch (e) { if (e && (e.code === 'resource_exhausted' || e.code === 'unavailable') && attempt < 5) { await new Promise(r => setTimeout(r, 300 * (attempt + 1) + Math.random() * 300)); continue; } throw e; }
-  }
-}
-const dirtyChunks = new Set(); let flushTimer = null;
-function saveProspect(c){
-  if (!campaignId) { say('No campaign loaded; reload the page before importing'); return Promise.resolve(); }
-  assignChunk(c); dirtyChunks.add(c.chunk);
-  return new Promise(res => { clearTimeout(flushTimer); flushTimer = setTimeout(() => flushChunks().then(res, res), 150); });   // coalesce rapid edits into one write per chunk
-}
-async function flushChunks(cid){
-  const ns = [...dirtyChunks]; dirtyChunks.clear();
-  await Promise.all(ns.map(n => enqueue(() => writeChunk(n, cid)).catch(e => { dirtyChunks.add(n); say('Could not save: ' + (e.message || e.code)); logLine('save failed: ' + (e.message || e.code)); })));
-}
-function saveCampaign(){ return enqueue(() => db.doc(campPath(campaignId)).set(camp)).catch(e => say('Could not save settings: ' + (e.message || e.code))); }
-async function readCampaigns(){
-  const snap = await db.collection(base()).limit(200).get(), out = {};
-  snap.docs.forEach(d => { const v = d.data() || {}; if (v.type === 'campaign') out[d.id] = clone(v); else if (d.id === 'profile') profile = clone(v); });
-  return out;
-}
-async function loadCampaigns(){
-  campaigns = await readCampaigns();
-  if (!Object.keys(campaigns).length) { await new Promise(r => setTimeout(r, 1500)); campaigns = await readCampaigns(); }   // ask twice before concluding there is nothing: never create a fresh campaign over an answer that was still loading
-  if (!Object.keys(campaigns).length) { const id = 'c' + Date.now().toString(36); campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', createdAt: new Date().toISOString(), t: clone(DEFAULT_CAMPAIGN.t)}); await db.doc(campPath(id)).set(campaigns[id]); }
-  let last = profile.campaignId || null;                       // the campaign you were in last time, remembered on the server; the browser copy is a fallback
-  if (!campaigns[last]) { try { last = localStorage.getItem('desk-campaign'); } catch (e) {} }
-  campaignId = campaigns[last] ? last : Object.keys(campaigns).sort((a,b) => (campaigns[a].createdAt||'').localeCompare(campaigns[b].createdAt||''))[0];
-  camp = campaigns[campaignId];
-  const sel = $('#campaignSel'); sel.innerHTML = Object.keys(campaigns).map(id => `<option value="${id}" ${id === campaignId ? 'selected' : ''}>${esc(campaigns[id].name)}</option>`).join('');
-}
-async function loadProspects(){
-  P = {}; loaded = false; dirtyChunks.clear(); const cid = campaignId;
-  $('#empty').hidden = false; $('#empty').textContent = 'Loading your prospects…';
-  let snap;
-  for (let attempt = 0; ; attempt++) {
-    try { snap = await db.collection(`${base()}/${cid}/chunks`).limit(1000).get(); break; }
-    catch (e) { if (attempt < 2 && e && (e.code === 'unavailable' || e.code === 'resource_exhausted')) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; } throw e; }
-  }
-  if (cid !== campaignId) return;
-  snap.docs.forEach(d => { const v = clone(d.data() || {}); const n = typeof v.n === 'number' ? v.n : +String(d.id).replace(/^p/, ''); for (const c of Object.values(v.items || {})) { c.key = keyOf(c.email); c.chunk = n; if (c.key) P[c.key] = c; } });
-  loaded = true;
-  await mergeLegacy(cid);
-  if (cid !== campaignId) return;
-  open.clear(); render();
-}
-// The old layout kept one document per prospect. Fold anything still there into the chunks (prospects that are missing, sent/reply/bounce dates
-// the chunks lack), then delete the old copies in the background. Safe to run on every load; it is a no-op once they are gone.
-async function mergeLegacy(cid){
-  let old; try { old = await db.collection(`${base()}/${cid}/prospects`).limit(1000).get(); } catch (e) { return; }
-  if (!old.docs.length || cid !== campaignId) return;
-  let added = 0, merged = 0;
-  for (const d of old.docs) {
-    const o = clone(d.data() || {}); const k = keyOf(o.email); if (!k || !k.includes('@')) continue;
-    const c = P[k];
-    if (!c) { delete o.chunk; o.key = k; o.log = o.log || {sent: [], replies: [], bounces: []}; o.manual = o.manual || {}; P[k] = o; assignChunk(o); dirtyChunks.add(o.chunk); added++; continue; }
-    let ch = false; c.log = c.log || {sent: [], replies: [], bounces: []}; const ol = o.log || {};
-    for (const f of ['sent', 'replies', 'bounces']) for (const t of ol[f] || []) if (addUnique(c.log[f] = c.log[f] || [], t)) ch = true;
-    for (const [f, v] of Object.entries(o.manual || {})) if (v && (c.manual = c.manual || {})[f] == null) { c.manual[f] = v; ch = true; }
-    if (ch) { dirtyChunks.add(c.chunk); merged++; }
-  }
-  if (dirtyChunks.size) await flushChunks(cid);
-  logLine(`old storage layout: ${old.docs.length} records found · ${added} prospects recovered · ${merged} updated · removing the old copies`);
-  if (added || merged) say(`${added + merged} prospects recovered from an older version of this page`);
-  (async () => { for (const d of old.docs) for (let a = 0; a < 3; a++) { try { await db.doc(`${base()}/${cid}/prospects/${d.id}`).delete(); break; } catch (e) { await new Promise(r => setTimeout(r, 500 * (a + 1))); } } })();
-}
-async function switchCampaign(id){ campaignId = id; camp = campaigns[id]; try { localStorage.setItem('desk-campaign', id); } catch (e) {} saveProfile({campaignId: id}); await loadProspects(); }
-
-// ---------- import ----------
-function parseCSV(text){
-  const rows = [], re = /("([^"]|"")*"|[^,\r\n]*)(,|\r?\n|$)/g; let row = [], m;
-  while ((m = re.exec(text)) !== null) { let v = m[1]; if (v.startsWith('"')) v = v.slice(1, -1).replace(/""/g, '"'); row.push(v); if (m[3] !== ',') { if (row.length > 1 || row[0] !== '') rows.push(row); row = []; } if (m[3] === '') break; }
-  if (!rows.length) return [];
-  const head = rows[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
-  const alias = {firstname: 'first_name', 'first_name': 'first_name', lastname: 'last_name', 'last_name': 'last_name', email: 'email', 'company': 'organisation', 'company_name': 'organisation', 'company_name_for_emails': 'organisation', organization: 'organisation', organisation: 'organisation', title: 'title', area: 'area', website: 'website', 'person_linkedin_url': 'linkedin', linkedin: 'linkedin', city: 'city', subject: 'subject', body: 'body', review: 'review'};
-  return rows.slice(1).map(r => { const o = {}; head.forEach((h, k) => { const f = alias[h]; if (f && r[k] !== undefined) o[f] = r[k].trim(); }); return o; }).filter(o => o.email);
-}
-async function importProspects(file){
-  if (!campaignId) throw new Error('no campaign loaded; reload the page first');
-  if (!loaded) throw new Error('your existing prospects have not finished loading; wait a moment or reload, then import again');   // importing over an unread list would overwrite it
-  const text = await file.text(); let arr;
-  try { arr = file.name.toLowerCase().endsWith('.json') ? JSON.parse(text) : parseCSV(text); } catch (e) { throw new Error('could not read the file'); }
-  if (!Array.isArray(arr) || !arr.length) throw new Error('no prospects found in the file');
-  let added = 0, updated = 0, unchanged = 0;
-  const todo = [], seenEmails = new Set();
-  for (const raw of arr) {
-    const email = keyOf(raw.email); if (!email || !email.includes('@') || seenEmails.has(email)) continue;
-    seenEmails.add(email);
-    const cur = P[email];
-    const fields = {first_name: raw.first_name || '', last_name: raw.last_name || '', title: raw.title || '', area: raw.area || '', organisation: raw.organisation || '', email: String(raw.email).trim(),
-       website: raw.website || '', linkedin: raw.linkedin || '', city: raw.city || '', subject: raw.subject || '', body: raw.body || '', review: raw.review || ''};
-    if (cur && Object.keys(fields).every(k => (cur[k] || '') === fields[k])) { unchanged++; continue; }   // re-import: skip rows that did not change
-    const c = Object.assign({}, cur || {log: {sent: [], replies: [], bounces: []}, manual: {}, pending: null, addedAt: new Date().toISOString()}, fields);
-    c.key = email; P[email] = c; cur ? updated++ : added++;
-    todo.push(c);
-  }
-  todo.forEach(assignChunk);
-  const ns = [...new Set(todo.map(c => c.chunk))]; let done = 0, failed = 0;
-  $('#importMsg').textContent = `Saving ${todo.length} prospects (${ns.length} documents)…`;
-  let idx = 0; const worker = async () => { while (idx < ns.length) { const n = ns[idx++]; try { await writeChunk(n); } catch (e) { failed += todo.filter(c => c.chunk === n).length; logLine('import save failed: ' + (e && (e.message || e.code))); } done++; $('#importMsg').textContent = `Saving… ${done} of ${ns.length} documents`; } };
-  await Promise.all(Array.from({length: Math.min(4, ns.length)}, worker));
-  if (failed) say(`${failed} prospects could not be saved — import the file again to retry them`);
-  return {added, updated, unchanged, failed};
-}
-
-// ---------- settings panel ----------
-function openSettings(){
-  $('#settingsPanel').hidden = false; $('#importPanel').hidden = true;
-  $('#setCampName').textContent = camp.name; $('#campName').value = camp.name;
-  for (const s of [1,2,3]) { $(`#t${s}s`).value = (camp.t[s] || {}).subject || ''; $(`#t${s}b`).value = (camp.t[s] || {}).body || ''; }
-  $('#senderEmail').value = SENDER; $('#w1').value = camp.waitDays[0]; $('#w2').value = camp.waitDays[1]; $('#hol').value = (camp.holidays || []).join('\n');
-  $('#confirmDel').hidden = true;
-}
-async function saveSettings(){
-  camp.name = $('#campName').value.trim() || camp.name;
-  const se = keyOf($('#senderEmail').value); if (se !== SENDER) { SENDER = se; saveProfile({senderEmail: SENDER}); }
-  for (const s of [1,2,3]) camp.t[s] = {subject: $(`#t${s}s`).value, body: $(`#t${s}b`).value};
-  camp.waitDays = [Math.max(1, +$('#w1').value || 2), Math.max(1, +$('#w2').value || 3)];
-  camp.holidays = $('#hol').value.split(/\s+/).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x));
-  await saveCampaign(); $('#campaignSel').querySelector(`option[value="${campaignId}"]`).textContent = camp.name; $('#setCampName').textContent = camp.name; render(); say('Saved');
-}
-async function newCampaign(){
-  const id = 'c' + Date.now().toString(36);
-  campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', name: 'New campaign', createdAt: new Date().toISOString(), campaignStart: todayYmd(), t: clone(DEFAULT_CAMPAIGN.t)});
-  await db.doc(campPath(id)).set(campaigns[id]);
-  $('#campaignSel').insertAdjacentHTML('beforeend', `<option value="${id}">New campaign</option>`); $('#campaignSel').value = id;
-  await switchCampaign(id); openSettings(); say('Campaign created. Give it a name and templates, then import prospects.');
-}
-async function deleteCampaign(){
-  const ns = [...new Set(Object.values(P).map(c => c.chunk).filter(n => n !== undefined))];
-  for (const n of ns) await enqueue(() => db.doc(chunkPath(campaignId, n)).delete());
-  await enqueue(() => db.doc(campPath(campaignId)).delete());
-  delete campaigns[campaignId]; $('#settingsPanel').hidden = true; if (profile.campaignId === campaignId) saveProfile({campaignId: null});
-  await loadCampaigns(); await loadProspects(); say('Campaign deleted');
-}
-
-// ---------- events ----------
-list.addEventListener('click', async e => {
-  const card = e.target.closest('.card'); if (!card) return;
-  const c = P[card.dataset.key]; if (!c) return; const i = info(c);
-  const act = e.target.closest('[data-act]');
-  if (act) {
-    const a = act.dataset.act;
-    if (a === 'owa' || a === 'mailto') { refreshLinks(card, c); setTimeout(() => { c.pending = {step: i.step, at: new Date().toISOString()}; saveProspect(c); render(); say('Draft opened. It counts once Outlook shows it as sent.'); }, 400); return; }
-    e.preventDefault();
-    const body = card.querySelector('.draft'); c.manual = c.manual || {};
-    if (a === 'copyEmail') copy(c.email, 'Address');
-    if (a === 'copyBody' && body) copy(body.value, 'Body');
-    if (a === 'unpend') { c.pending = null; }
-    if (a === 'manualSent') { c.manual.sent = [...(c.manual.sent || []), new Date().toISOString()]; c.pending = null; open.delete(c.key); say(STEP_NAME[i.step] + ' marked as sent'); }
-    if (a === 'manualReplied') { c.manual.replied = new Date().toISOString(); c.manual.ignoreReplies = false; open.delete(c.key); say('Moved to Replied'); }
-    if (a === 'notReply') { c.manual.replied = null; c.manual.ignoreReplies = true; open.delete(c.key); say('Reply ignored; sequence continues'); }
-    if (a === 'handled') { c.manual.handled = true; open.delete(c.key); say('Removed from the page'); }
-    if (a === 'unhandle') { c.manual.handled = false; open.delete(c.key); }
-    if (a === 'remove') { const n = c.chunk; delete P[c.key]; open.delete(c.key); if (n !== undefined) { dirtyChunks.add(n); flushChunks(); } render(); say('Prospect removed'); return; }
-    if (a !== 'copyEmail' && a !== 'copyBody') saveProspect(c);
-    render(); return;
-  }
-  if (e.target.closest('.head')) { open.has(c.key) ? open.delete(c.key) : open.add(c.key); render(); if (open.has(c.key)) refreshLinks(list.querySelector(`.card[data-key="${CSS.escape(c.key)}"]`), c); }
-});
-list.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('head')) { e.preventDefault(); e.target.click(); } });
-list.addEventListener('input', e => { const card = e.target.closest('.card'); if (card && e.target.matches('.subj,.draft')) refreshLinks(card, P[card.dataset.key]); });
-$('#fReview').addEventListener('input', render);
-$('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; showHandled = false; render(); } });
-$('#foot').addEventListener('click', e => { if (e.target.id === 'toggleHandled') { showHandled = !showHandled; render(); } });
-$('#campaignSel').addEventListener('change', e => switchCampaign(e.target.value));
-$('#btnImport').addEventListener('click', () => { $('#importPanel').hidden = !$('#importPanel').hidden; $('#settingsPanel').hidden = true; $('#importMsg').textContent = ''; });
-$('#btnImportClose').addEventListener('click', () => { $('#importPanel').hidden = true; });
-$('#importFile').addEventListener('change', async e => {
-  const f = e.target.files && e.target.files[0]; if (!f) return;
-  try { const r = await importProspects(f); $('#importMsg').textContent = `Done: ${r.added} added, ${r.updated} updated${r.unchanged ? ', ' + r.unchanged + ' already up to date' : ''}${r.failed ? ', ' + r.failed + ' failed' : ''}.`; render(); say(`${r.added + r.updated} prospects imported`); }
-  catch (err) { $('#importMsg').textContent = 'Import failed: ' + err.message; }
-  e.target.value = '';
-});
-$('#btnSettings').addEventListener('click', () => { if ($('#settingsPanel').hidden) openSettings(); else $('#settingsPanel').hidden = true; });
-$('#btnSettingsClose').addEventListener('click', () => { $('#settingsPanel').hidden = true; });
-$('#btnSaveSettings').addEventListener('click', saveSettings);
-$('#btnNewCampaign').addEventListener('click', newCampaign);
-$('#btnDeleteCampaign').addEventListener('click', () => { $('#confirmDel').hidden = false; });
-$('#btnDeleteYes').addEventListener('click', deleteCampaign);
-$('#copyList').addEventListener('click', () => {
-  const rows = Object.values(P).map(c => { const i = info(c); return [c.first_name + ' ' + c.last_name, c.organisation, c.title, c.email, i.status, i.sent[0] || '', i.sent[1] || '', i.sent[2] || '', i.lastReply || '', i.due || ''].map(v => String(v).slice(0, 10)).join('\t'); });
-  copy(['Name\tOrganisation\tTitle\tEmail\tStatus\tEmail 1\tFollow-up 1\tFollow-up 2\tReplied\tNext due', ...rows].join('\n'), 'Status list');
-});
-
-// ---------- Outlook sync (Microsoft 365 connector) ----------
-const SERVER = 'Microsoft 365', TOOL = 'outlook_email_search', PERM = 'mcp:' + SERVER;
-function parseItems(result){
-  const raw = [], texts = [], out = [], seen = new Set();
-  // The connector may return the emails as one text block, as many text blocks (one per email), or as a parsed payload.
-  for (const b of (result && result.content) || []) if (b && b.type === 'text' && typeof b.text === 'string') texts.push(b.text);
-  if (result && result.payload !== undefined) {
-    if (typeof result.payload === 'string') texts.push(result.payload);
-    else if (Array.isArray(result.payload)) result.payload.forEach(x => raw.push(x));
-    else raw.push(result.payload);
-  }
-  for (const t of texts) {
-    try { const v = JSON.parse(t); (Array.isArray(v) ? v : [v]).forEach(x => raw.push(x)); continue; } catch (e) {}
-    let depth = 0, start = -1, inStr = false, escp = false;
-    for (let k = 0; k < t.length; k++) { const ch = t[k];
-      if (inStr) { if (escp) escp = false; else if (ch === '\\') escp = true; else if (ch === '"') inStr = false; continue; }
-      if (ch === '"') inStr = true; else if (ch === '{') { if (depth === 0) start = k; depth++; }
-      else if (ch === '}') { depth--; if (depth === 0 && start >= 0) { try { raw.push(JSON.parse(t.slice(start, k + 1))); } catch (e) {} start = -1; } } }
-  }
-  // Dedupe (payload often repeats the first content block); keep pagination tails.
-  for (const x of raw) {
-    if (!x || typeof x !== 'object') continue;
-    const key = x.id || x.uri || (x.nextOffset !== undefined || x.moreResults !== undefined ? 'tail' : null);
-    if (key) { if (seen.has(key)) continue; seen.add(key); }
-    out.push(x);
-  }
-  return out;
-}
-function timeoutSignal(ms){ try { return AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined; } catch (e) { return undefined; } }
-async function scanFolder(folder, after, onItem){
-  let offset = 0, pages = 0, n = 0, folderTotal = 0;
-  while (pages < 80) {
-    folderProgress(folder, n, folderTotal, pages);
-    const t0 = Date.now();
-    let res;
-    try { res = await mcp.callTool(SERVER, TOOL, {folderName: folder, afterDateTime: after, order: 'newest', limit: 25, offset}, {cache: false, signal: timeoutSignal(90000)}); }
-    catch (e) { logLine(`${folder} page ${pages + 1}: error ${e && e.code} ${e && e.message ? e.message.slice(0, 160) : ''}`); throw e; }
-    const items = parseItems(res);
-    const tail = items.find(x => x && (x.nextOffset !== undefined || x.moreResults !== undefined)) || {};
-    if (tail.totalResultCount) folderTotal = tail.totalResultCount;
-    if (pages === 0) { const first = items.find(x => x && x.sender); logLine(`${folder}: ${items.length} items on page 1 in ${Date.now() - t0} ms; payload type ${typeof (res && res.payload)}; content blocks ${(res && res.content || []).length}; first item keys: ${first ? Object.keys(first).join(',') : 'none'}`); if (first) logLine(`${folder}: sample sender=${first.sender} recipients=${JSON.stringify(first.recipients)} sent=${first.sentDateTime}`); }
-    let next = null, matched = 0, onPage = 0;
-    for (const it of items) { if (it && it.nextOffset !== undefined) { next = it.nextOffset; continue; } if (!it || !it.sender) continue; n++; onPage++; if (onItem({sender: keyOf(it.sender), recipients: it.recipients, sentDateTime: it.sentDateTime, receivedDateTime: it.receivedDateTime, subject: it.subject || '', preview: it.summary || ''})) matched++; }
-    if ((next === null || next === undefined) && tail.nextOffset === undefined && onPage >= 25) next = offset + onPage;   // no pagination tail returned: keep going while pages are full
-    logLine(`${folder} page ${pages + 1}: ${onPage} emails, ${matched} matched prospects, next offset ${next}`);
-    pages++; folderProgress(folder, n, folderTotal, pages); if (next === null || next === undefined || onPage === 0) break; offset = next;
-  }
-  prog.phase++; return n;
-}
-function addUnique(arr, iso){ if (iso && !arr.includes(iso)) { arr.push(iso); arr.sort(); return true; } return false; }
-function errorText(e){
-  const code = e && e.code;
-  return code === 'needs_reauth' ? 'Outlook needs to be reconnected: claude.ai → Settings → Connectors → Microsoft 365, then sync again.'
-    : code === 'server_not_connected' || code === 'server_not_found' ? 'Add the Microsoft 365 connector in claude.ai → Settings → Connectors, then reload.'
-    : code === 'selection_required' ? 'You have more than one Microsoft 365 connector; choose one when the page asks, then sync again.'
-    : code === 'not_in_manifest' || code === 'consent_required' || code === 'not_granted' ? 'This page is not allowed to read Outlook yet. Press the button and accept the prompt.'
-    : code === 'blocked_by_policy' || code === 'approval_required' ? 'Your organisation’s policy blocks this page from reading Outlook.'
-    : code === 'cancelled' ? 'Outlook took too long to answer. Try again.'
-    : code === 'server_unavailable' || code === 'upstream_error' || code === 'rate_limited' ? 'Outlook did not answer. Wait a moment and try again.'
-    : 'Sync failed (' + (code || 'unknown') + '): ' + (e && e.message ? e.message : '');
-}
-async function syncOutlook(auto){
-  if (!mcp) { setStatus('Outlook sync is not available in this view.', true); return; }
-  if (!camp) { setStatus('No campaign loaded; reload the page.', true); return; }
-  if (syncing) { say('Sync already running'); return; }
-  syncing = true; $('#syncBtn').textContent = 'Syncing…';
-  // Incremental only once something has actually been matched; until then rescan from the campaign start.
-  const anyLogged = Object.values(P).some(c => c.log && ((c.log.sent || []).length || (c.log.replies || []).length));
-  const since = (camp.lastSync && anyLogged) ? ymd(new Date(new Date(camp.lastSync).getTime() - 2 * 86400000)) : (camp.campaignStart || todayYmd());
-  try {
-    const changed = new Set(); let skippedSender = 0; prog.phase = 0; showProgress(1, 'Connecting to Outlook…');
-    if (perms) { let st = 'prompt'; try { st = await Promise.race([perms.state(PERM), new Promise(r => setTimeout(() => r('unknown'), 3000))]); } catch (e) {}
-      logLine('Permission state for Microsoft 365: ' + st);
-      if (st === 'denied') { showProgress(null); setStatus('Outlook access was declined for this page. Allow Microsoft 365 in the page’s Permissions menu, then sync again.', true); return; }
-      if (st === 'prompt') { showProgress(2, 'Asking for Outlook access… if no prompt appears, allow Microsoft 365 in the page’s Permissions menu'); try { await Promise.race([perms.request([PERM]), new Promise(r => setTimeout(r, 8000))]); } catch (e) {} } }
-    showProgress(3, 'Reading Sent Items…');
-    logLine(`Sync start · ${Object.keys(P).length} prospects · since ${since} · sender filter ${SENDER || '(none)'}`);
-    const nSent = await scanFolder('Sent Items', since, it => {
-      if (SENDER && String(it.sender).toLowerCase() !== SENDER) { skippedSender++; return false; }
-      let hit = false;
-      for (const r of it.recipients || []) { const c = P[keyOf(r)]; if (!c) continue; hit = true; c.log = c.log || {sent: [], replies: [], bounces: []}; if (addUnique(c.log.sent, it.sentDateTime || it.receivedDateTime)) changed.add(c.key); if (c.pending) { c.pending = null; changed.add(c.key); } }
-      return hit;
-    });
-    if (skippedSender) logLine(`${skippedSender} sent emails ignored because the sender was not ${SENDER} (change “Your Outlook address” in settings if that is wrong)`);
-    let nBounce = 0;
-    const nIn = await scanFolder('Inbox', since, it => {
-      const snd = String(it.sender).toLowerCase();
-      const isNdr = /^undeliverable|delivery status notification|mail delivery failed|returned mail/i.test(it.subject) || /^(postmaster|mailer-daemon|microsoftexchange)/i.test(snd);
-      if (isNdr) { const text = (it.preview || '') + ' ' + it.subject;
-        let hit = false;
-        for (const m of text.toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) || []) { const c = P[m]; if (!c) continue; hit = true; c.log = c.log || {sent: [], replies: [], bounces: []}; c.log.bounces = c.log.bounces || []; if (addUnique(c.log.bounces, it.receivedDateTime || it.sentDateTime)) { nBounce++; changed.add(c.key); } }
-        return hit; }
-      const c = P[snd]; if (!c) return false; c.log = c.log || {sent: [], replies: [], bounces: []}; if (addUnique(c.log.replies, it.receivedDateTime || it.sentDateTime)) changed.add(c.key); return true;
-    });
-    for (const k of changed) saveProspect(P[k]);
-    camp.lastSync = new Date().toISOString(); enqueue(() => db.doc(campPath(campaignId)).update({lastSync: camp.lastSync})).catch(() => saveCampaign());   // update, not set: a stale copy in another tab must not roll settings back
-    const emailed = Object.values(P).filter(c => (c.log && c.log.sent || []).length).length, replied = Object.values(P).filter(c => (c.log && c.log.replies || []).length).length;
-    setStatus(`Synced ${new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'})} · ${nSent} sent + ${nIn} received emails checked since ${fmt(since)} · ${emailed} prospects emailed · ${replied} replied${nBounce ? ' · ' + nBounce + ' new bounce' + (nBounce > 1 ? 's' : '') : ''} · ${changed.size} updated`);
-    render();
-    logLine(`Sync done · ${changed.size} prospects updated`); showProgress(100); setTimeout(() => showProgress(null), 1500);
-  } catch (e) { showProgress(null); setStatus(errorText(e), true); logLine('Sync failed: ' + (e && (e.code || e.message))); }
-  finally { syncing = false; $('#syncBtn').textContent = 'Sync with Outlook'; }
-}
-$('#syncBtn').addEventListener('click', () => syncOutlook(false));
-
-// ---------- boot ----------
-function gate(msg){ $('#gate').hidden = !msg; if (msg) $('#gateMsg').textContent = msg; }
-(async () => {
-  render();
-  if (!(window.claude && window.claude.use)) { $('#who').textContent = 'This copy of the page is not running inside Claude, so it has no storage or Outlook access.'; gate('Open Cludo Outreach Desk from your Claude artifacts to use it.'); return; }
-  const [d, u, m, p] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('mcp'), window.claude.use('permissions')]);
-  db = d; user = u; mcp = m; perms = p;
-  if (!db || !user) { $('#who').textContent = 'Sign in to Claude to use the desk.'; gate('Storage is not available in this view. Sign in to Claude and open the page from your artifacts list.'); return; }
-  try { me = await user.me(); uid = await user.id(); } catch (e) {}
-  if (!uid) { gate('Could not identify you. Sign in to Claude and reload.'); return; }
-  SENDER = (me.email || '').toLowerCase();
-  try { const pr = await db.doc(`${base()}/profile`).get(); if (pr.exists) profile = clone(pr.data()); if (profile.senderEmail) SENDER = String(profile.senderEmail).toLowerCase(); } catch (e) {}
-  $('#who').textContent = `${me.name || 'You'}${SENDER ? ' · ' + SENDER : ' · set your Outlook address under Sequence & settings'} · your prospects are private to you`;
-  let canWrite = null; try { canWrite = await user.can('data.write'); } catch (e) {}
-  if (canWrite === false) gate('You can view this app but not save anything: ask the owner to add you as a Contributor (or higher) in the share menu, then reload.');
-  try { await loadCampaigns(); await loadProspects(); }
-  catch (e) { gate('Could not load your data (' + (e.code || 'error') + (e.message ? ': ' + e.message : '') + '). ' + (e.code === 'invalid_argument' ? 'Ask the owner to share this app with you as a Contributor.' : 'Reload to try again.')); logLine('load failed: ' + (e.stack || e.message || e.code)); return; }
-  if (!mcp) { setStatus('Connector access is not available in this view; mark steps by hand.', true); $('#syncBtn').hidden = true; return; }
-  let st = 'prompt'; if (perms) { try { st = await perms.state(PERM); } catch (e) {} }
-  if (st === 'granted') { if (Object.keys(P).length) syncOutlook(true); else setStatus('Import prospects, then sync.'); }
-  else if (st === 'denied') setStatus('Outlook access was declined for this page. Allow Microsoft 365 in the page’s Permissions menu, then press Sync.', true);
-  else { $('#syncBtn').textContent = 'Allow Outlook access and sync'; setStatus('First time here: press the button and accept the Microsoft 365 prompt.'); }
-})();
-</script>
-
+<script src="config.js"></script>
+<script src="store-claude.js"></script>
+<script src="store-graph.js"></script>
+<script src="app.js"></script>
 </body></html>

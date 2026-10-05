@@ -369,11 +369,16 @@ function refreshLinks(card, c){
 }
 
 // ---------- persistence (artifact database, private per user) ----------
+// Layout: data/users/<uid>/profile {senderEmail, campaignId} · data/users/<uid>/<cid> = campaign · data/users/<uid>/<cid>/chunks/p<n> = {type:'chunk', n, items}.
+// data/users/<uid>/<cid>/prospects/<id> is the old one-document-per-prospect layout: merged in and removed on load.
+// Documents the store hands back are FROZEN: copy them (clone) before adding fields or editing, or the change silently does nothing.
 const base = () => `data/users/${uid}`;
 const campPath = id => `${base()}/${id}`;
 const CHUNK = 40;                                                        // prospects per stored document (keeps each doc well under the 256 KiB cap)
 const chunkPath = (id, n) => `${base()}/${id}/chunks/p${n}`;
-const legacyPath = (id, email) => `${base()}/${id}/prospects/${docId(email)}`;
+const clone = v => JSON.parse(JSON.stringify(v));
+let profile = {}, loaded = false;                                        // loaded: the current campaign's prospects were read back successfully
+function saveProfile(patch){ Object.assign(profile, patch); return enqueue(() => db.doc(`${base()}/profile`).set(profile)).catch(e => logLine('profile save failed: ' + (e.message || e.code))); }
 const writeQueue = []; let writing = false;
 function enqueue(fn){ return new Promise((res, rej) => { writeQueue.push({fn, res, rej}); pump(); }); }
 async function pump(){ if (writing) return; writing = true; while (writeQueue.length) { const w = writeQueue.shift(); try { w.res(await w.fn()); } catch (e) { w.rej(e); } } writing = false; }
@@ -398,35 +403,57 @@ async function flushChunks(cid){
   await Promise.all(ns.map(n => enqueue(() => writeChunk(n, cid)).catch(e => { dirtyChunks.add(n); say('Could not save: ' + (e.message || e.code)); logLine('save failed: ' + (e.message || e.code)); })));
 }
 function saveCampaign(){ return enqueue(() => db.doc(campPath(campaignId)).set(camp)).catch(e => say('Could not save settings: ' + (e.message || e.code))); }
+async function readCampaigns(){
+  const snap = await db.collection(base()).limit(200).get(), out = {};
+  snap.docs.forEach(d => { const v = d.data() || {}; if (v.type === 'campaign') out[d.id] = clone(v); else if (d.id === 'profile') profile = clone(v); });
+  return out;
+}
 async function loadCampaigns(){
-  const snap = await db.collection(base()).limit(200).get();
-  campaigns = {}; snap.docs.forEach(d => { const v = d.data() || {}; if (v.type === 'campaign') campaigns[d.id] = v; });
-  if (!Object.keys(campaigns).length) { const id = 'c' + Date.now().toString(36); campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', createdAt: new Date().toISOString(), t: JSON.parse(JSON.stringify(DEFAULT_CAMPAIGN.t))}); await db.doc(campPath(id)).set(campaigns[id]); }
-  let last = null; try { last = localStorage.getItem('desk-campaign'); } catch (e) {}
+  campaigns = await readCampaigns();
+  if (!Object.keys(campaigns).length) { await new Promise(r => setTimeout(r, 1500)); campaigns = await readCampaigns(); }   // ask twice before concluding there is nothing: never create a fresh campaign over an answer that was still loading
+  if (!Object.keys(campaigns).length) { const id = 'c' + Date.now().toString(36); campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', createdAt: new Date().toISOString(), t: clone(DEFAULT_CAMPAIGN.t)}); await db.doc(campPath(id)).set(campaigns[id]); }
+  let last = profile.campaignId || null;                       // the campaign you were in last time, remembered on the server; the browser copy is a fallback
+  if (!campaigns[last]) { try { last = localStorage.getItem('desk-campaign'); } catch (e) {} }
   campaignId = campaigns[last] ? last : Object.keys(campaigns).sort((a,b) => (campaigns[a].createdAt||'').localeCompare(campaigns[b].createdAt||''))[0];
   camp = campaigns[campaignId];
   const sel = $('#campaignSel'); sel.innerHTML = Object.keys(campaigns).map(id => `<option value="${id}" ${id === campaignId ? 'selected' : ''}>${esc(campaigns[id].name)}</option>`).join('');
 }
 async function loadProspects(){
-  P = {};
-  const snap = await db.collection(`${base()}/${campaignId}/chunks`).limit(1000).get();
-  snap.docs.forEach(d => { const v = d.data() || {}; for (const c of Object.values(v.items || {})) { c.key = keyOf(c.email); c.chunk = v.n; if (c.key) P[c.key] = c; } });
-  if (!snap.docs.length) {                                    // one-time migration from the old one-document-per-prospect layout
-    const old = await db.collection(`${base()}/${campaignId}/prospects`).limit(1000).get();
-    if (old.docs.length) {
-      old.docs.forEach(d => { const c = d.data(); c.key = keyOf(c.email); if (c.key) P[c.key] = c; });
-      Object.values(P).forEach((c, k) => { c.chunk = Math.floor(k / CHUNK); });
-      const ns = [...new Set(Object.values(P).map(c => c.chunk))];
-      $('#empty').hidden = false; $('#empty').textContent = `Upgrading storage for ${old.docs.length} prospects…`;
-      await Promise.all(ns.map(n => writeChunk(n)));
-      logLine(`migrated ${old.docs.length} prospects into ${ns.length} documents`);
-      const cid = campaignId;
-      (async () => { for (const d of old.docs) { try { await db.doc(`${base()}/${cid}/prospects/${d.id}`).delete(); } catch (e) {} } })();   // clean up in the background
-    }
+  P = {}; loaded = false; dirtyChunks.clear(); const cid = campaignId;
+  $('#empty').hidden = false; $('#empty').textContent = 'Loading your prospects…';
+  let snap;
+  for (let attempt = 0; ; attempt++) {
+    try { snap = await db.collection(`${base()}/${cid}/chunks`).limit(1000).get(); break; }
+    catch (e) { if (attempt < 2 && e && (e.code === 'unavailable' || e.code === 'resource_exhausted')) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; } throw e; }
   }
+  if (cid !== campaignId) return;
+  snap.docs.forEach(d => { const v = clone(d.data() || {}); const n = typeof v.n === 'number' ? v.n : +String(d.id).replace(/^p/, ''); for (const c of Object.values(v.items || {})) { c.key = keyOf(c.email); c.chunk = n; if (c.key) P[c.key] = c; } });
+  loaded = true;
+  await mergeLegacy(cid);
+  if (cid !== campaignId) return;
   open.clear(); render();
 }
-async function switchCampaign(id){ campaignId = id; camp = campaigns[id]; try { localStorage.setItem('desk-campaign', id); } catch (e) {} await loadProspects(); }
+// The old layout kept one document per prospect. Fold anything still there into the chunks (prospects that are missing, sent/reply/bounce dates
+// the chunks lack), then delete the old copies in the background. Safe to run on every load; it is a no-op once they are gone.
+async function mergeLegacy(cid){
+  let old; try { old = await db.collection(`${base()}/${cid}/prospects`).limit(1000).get(); } catch (e) { return; }
+  if (!old.docs.length || cid !== campaignId) return;
+  let added = 0, merged = 0;
+  for (const d of old.docs) {
+    const o = clone(d.data() || {}); const k = keyOf(o.email); if (!k || !k.includes('@')) continue;
+    const c = P[k];
+    if (!c) { delete o.chunk; o.key = k; o.log = o.log || {sent: [], replies: [], bounces: []}; o.manual = o.manual || {}; P[k] = o; assignChunk(o); dirtyChunks.add(o.chunk); added++; continue; }
+    let ch = false; c.log = c.log || {sent: [], replies: [], bounces: []}; const ol = o.log || {};
+    for (const f of ['sent', 'replies', 'bounces']) for (const t of ol[f] || []) if (addUnique(c.log[f] = c.log[f] || [], t)) ch = true;
+    for (const [f, v] of Object.entries(o.manual || {})) if (v && (c.manual = c.manual || {})[f] == null) { c.manual[f] = v; ch = true; }
+    if (ch) { dirtyChunks.add(c.chunk); merged++; }
+  }
+  if (dirtyChunks.size) await flushChunks(cid);
+  logLine(`old storage layout: ${old.docs.length} records found · ${added} prospects recovered · ${merged} updated · removing the old copies`);
+  if (added || merged) say(`${added + merged} prospects recovered from an older version of this page`);
+  (async () => { for (const d of old.docs) for (let a = 0; a < 3; a++) { try { await db.doc(`${base()}/${cid}/prospects/${d.id}`).delete(); break; } catch (e) { await new Promise(r => setTimeout(r, 500 * (a + 1))); } } })();
+}
+async function switchCampaign(id){ campaignId = id; camp = campaigns[id]; try { localStorage.setItem('desk-campaign', id); } catch (e) {} saveProfile({campaignId: id}); await loadProspects(); }
 
 // ---------- import ----------
 function parseCSV(text){
@@ -439,6 +466,7 @@ function parseCSV(text){
 }
 async function importProspects(file){
   if (!campaignId) throw new Error('no campaign loaded; reload the page first');
+  if (!loaded) throw new Error('your existing prospects have not finished loading; wait a moment or reload, then import again');   // importing over an unread list would overwrite it
   const text = await file.text(); let arr;
   try { arr = file.name.toLowerCase().endsWith('.json') ? JSON.parse(text) : parseCSV(text); } catch (e) { throw new Error('could not read the file'); }
   if (!Array.isArray(arr) || !arr.length) throw new Error('no prospects found in the file');
@@ -474,7 +502,7 @@ function openSettings(){
 }
 async function saveSettings(){
   camp.name = $('#campName').value.trim() || camp.name;
-  const se = keyOf($('#senderEmail').value); if (se !== SENDER) { SENDER = se; enqueue(() => db.doc(`${base()}/profile`).set({senderEmail: SENDER})).catch(() => {}); }
+  const se = keyOf($('#senderEmail').value); if (se !== SENDER) { SENDER = se; saveProfile({senderEmail: SENDER}); }
   for (const s of [1,2,3]) camp.t[s] = {subject: $(`#t${s}s`).value, body: $(`#t${s}b`).value};
   camp.waitDays = [Math.max(1, +$('#w1').value || 2), Math.max(1, +$('#w2').value || 3)];
   camp.holidays = $('#hol').value.split(/\s+/).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x));
@@ -482,7 +510,7 @@ async function saveSettings(){
 }
 async function newCampaign(){
   const id = 'c' + Date.now().toString(36);
-  campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', name: 'New campaign', createdAt: new Date().toISOString(), campaignStart: todayYmd(), t: JSON.parse(JSON.stringify(DEFAULT_CAMPAIGN.t))});
+  campaigns[id] = Object.assign({}, DEFAULT_CAMPAIGN, {type: 'campaign', name: 'New campaign', createdAt: new Date().toISOString(), campaignStart: todayYmd(), t: clone(DEFAULT_CAMPAIGN.t)});
   await db.doc(campPath(id)).set(campaigns[id]);
   $('#campaignSel').insertAdjacentHTML('beforeend', `<option value="${id}">New campaign</option>`); $('#campaignSel').value = id;
   await switchCampaign(id); openSettings(); say('Campaign created. Give it a name and templates, then import prospects.');
@@ -491,7 +519,7 @@ async function deleteCampaign(){
   const ns = [...new Set(Object.values(P).map(c => c.chunk).filter(n => n !== undefined))];
   for (const n of ns) await enqueue(() => db.doc(chunkPath(campaignId, n)).delete());
   await enqueue(() => db.doc(campPath(campaignId)).delete());
-  delete campaigns[campaignId]; $('#settingsPanel').hidden = true;
+  delete campaigns[campaignId]; $('#settingsPanel').hidden = true; if (profile.campaignId === campaignId) saveProfile({campaignId: null});
   await loadCampaigns(); await loadProspects(); say('Campaign deleted');
 }
 
@@ -639,7 +667,7 @@ async function syncOutlook(auto){
       const c = P[snd]; if (!c) return false; c.log = c.log || {sent: [], replies: [], bounces: []}; if (addUnique(c.log.replies, it.receivedDateTime || it.sentDateTime)) changed.add(c.key); return true;
     });
     for (const k of changed) saveProspect(P[k]);
-    camp.lastSync = new Date().toISOString(); saveCampaign();
+    camp.lastSync = new Date().toISOString(); enqueue(() => db.doc(campPath(campaignId)).update({lastSync: camp.lastSync})).catch(() => saveCampaign());   // update, not set: a stale copy in another tab must not roll settings back
     const emailed = Object.values(P).filter(c => (c.log && c.log.sent || []).length).length, replied = Object.values(P).filter(c => (c.log && c.log.replies || []).length).length;
     setStatus(`Synced ${new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'})} · ${nSent} sent + ${nIn} received emails checked since ${fmt(since)} · ${emailed} prospects emailed · ${replied} replied${nBounce ? ' · ' + nBounce + ' new bounce' + (nBounce > 1 ? 's' : '') : ''} · ${changed.size} updated`);
     render();
@@ -660,7 +688,7 @@ function gate(msg){ $('#gate').hidden = !msg; if (msg) $('#gateMsg').textContent
   try { me = await user.me(); uid = await user.id(); } catch (e) {}
   if (!uid) { gate('Could not identify you. Sign in to Claude and reload.'); return; }
   SENDER = (me.email || '').toLowerCase();
-  try { const pr = await db.doc(`${base()}/profile`).get(); if (pr.exists && pr.data().senderEmail) SENDER = String(pr.data().senderEmail).toLowerCase(); } catch (e) {}
+  try { const pr = await db.doc(`${base()}/profile`).get(); if (pr.exists) profile = clone(pr.data()); if (profile.senderEmail) SENDER = String(profile.senderEmail).toLowerCase(); } catch (e) {}
   $('#who').textContent = `${me.name || 'You'}${SENDER ? ' · ' + SENDER : ' · set your Outlook address under Sequence & settings'} · your prospects are private to you`;
   let canWrite = null; try { canWrite = await user.can('data.write'); } catch (e) {}
   if (canWrite === false) gate('You can view this app but not save anything: ask the owner to add you as a Contributor (or higher) in the share menu, then reload.');
